@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="de">
+<head><meta charset="utf-8"><title>TECH_PAGES</title>
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:20px;background:#fff;color:#111} .container{max-width:900px;margin:0 auto} a.back{display:inline-block;margin-bottom:12px} pre code{white-space:pre-wrap}</style>
+</head>
+<body>
+	<div class="container">
+		<a class="back" href="index.html">← Zurück</a>
+		<article id="content">Lade Dokument…</article>
+	</div>
+	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+	<script>
+	(async ()=>{
+		try{ const md = await fetch('TECH_PAGES.md').then(r=>r.text()); document.getElementById('content').innerHTML = marked.parse(md); }
+		catch(e){ document.getElementById('content').textContent = 'Fehler beim Laden: '+e }
+	})();
+	</script>
+</body>
+</html>
