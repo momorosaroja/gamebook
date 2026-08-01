@@ -1,8 +1,31 @@
 <?php
 require_once 'config.php';
 
-// 1) Harterkodierte Liste deiner DBs
-$dbList = ['gamebook', 'sternenmaennchen', 'gb_demo'];
+// 1) DB-Liste dynamisch aus dem MySQL-Server auslesen (nur DBs, die mit "gamebook_" anfangen)
+$dbError = null;
+try {
+    $adminPdo = new PDO(
+        "mysql:host=".DB_HOST.";charset=utf8mb4",
+        DB_USER, DB_PASS,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+
+    $stmt = $adminPdo->query("SHOW DATABASES LIKE 'gamebook\\_%'");
+    $dbList = $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
+    if (!is_array($dbList)) {
+        $dbList = [];
+    }
+} catch (Exception $e) {
+    $dbList = [];
+    $dbError = 'Fehler beim Auslesen der Datenbanken: ' . $e->getMessage();
+}
+
+// Pfad zu mysqldump und Verzeichnis für Dumps (verwende absoluten Pfad für Zuverlässigkeit)
+$mysqldumpPath = '/usr/bin/mysqldump';
+$dumpDir = __DIR__ . '/dumps';
+if (!is_dir($dumpDir)) {
+    @mkdir($dumpDir, 0755, true);
+}
 
 // 2) Aktuell in config.php gesetzte DB auslesen
 $configFile    = 'config.php';
@@ -13,6 +36,9 @@ if (preg_match("/define\('DB_NAME',\s*'(.+?)'\);/", $configContent, $m)) {
 }
 
 $message = '';
+if (!empty($dbError)) {
+    $message = htmlspecialchars($dbError);
+}
 
 // 3) Formular-Verarbeitung
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -58,16 +84,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         escapeshellarg($db),
                         escapeshellarg($db)
                     );
-                    exec($cmd, $_o, $ret);
-                    $message = $ret === 0
-                        ? "Dump von <strong>$db</strong> erfolgreich als <strong>$db.sql</strong>."
-                        : "Fehler beim Dump von $db (Code $ret).";
-                        echo $cmd;
+                    // Capture stderr as well for better diagnostics
+                    $outFile = $dumpDir . '/' . $db . '.sql';
+                    // Run mysqldump in a minimal/clean environment to avoid picking up XAMPP libs
+                    $cmdFull = sprintf(
+                        'env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH= LD_PRELOAD= %s --protocol=TCP -h %s -u %s %s %s > %s 2>&1',
+                        escapeshellarg($mysqldumpPath),
+                        escapeshellarg(DB_HOST),
+                        escapeshellarg(DB_USER),
+                        $passPart,
+                        escapeshellarg($db),
+                        escapeshellarg($outFile)
+                    );
+                    // Log command for debugging (no sensitive data expected here)
+                    @file_put_contents($dumpDir . '/last_mysqldump_cmd.txt', $cmdFull);
+                    exec($cmdFull, $_o, $ret);
+                    if ($ret === 0) {
+                        $message = "Dump von <strong>$db</strong> erfolgreich als <strong>" . basename($outFile) . "</strong> im dumps-Verzeichnis.";
+                    } else {
+                        $outText = htmlspecialchars(implode("\n", $_o));
+                        $message = "Fehler beim Dump von $db (Code $ret). Ausgabe: <pre>$outText</pre>";
+                    }
+                    break;
+
+                case 'delete':
+                    // 1) Erzeuge automatischen Dump mit Zeitstempel
+                    $dumpFile = $db . '_' . date('Ymd_His') . '.sql';
+                    $passPart = DB_PASS !== '' ? '-p'.escapeshellarg(DB_PASS) : '';
+                    $cmd = sprintf(
+                        "mysqldump -h %s -u %s %s %s > %s",
+                        escapeshellarg(DB_HOST),
+                        escapeshellarg(DB_USER),
+                        $passPart,
+                        escapeshellarg($db),
+                        escapeshellarg($dumpFile)
+                    );
+                    // Capture stderr to get the mysqldump error message
+                    $outFile = $dumpDir . '/' . $dumpFile;
+                    // Run mysqldump in a minimal/clean environment to avoid picking up XAMPP libs
+                    $cmdFull = sprintf(
+                        'env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH= LD_PRELOAD= %s --protocol=TCP -h %s -u %s %s %s > %s 2>&1',
+                        escapeshellarg($mysqldumpPath),
+                        escapeshellarg(DB_HOST),
+                        escapeshellarg(DB_USER),
+                        $passPart,
+                        escapeshellarg($db),
+                        escapeshellarg($outFile)
+                    );
+                    // Log command for debugging
+                    @file_put_contents($dumpDir . '/last_mysqldump_cmd.txt', $cmdFull);
+                    exec($cmdFull, $_o, $ret);
+                    if ($ret !== 0) {
+                        $outText = implode("\n", $_o);
+                        throw new Exception("Dump vor Löschung fehlgeschlagen (Code $ret). Ausgabe: " . $outText);
+                    }
+
+                    // 2) DB löschen
+                    $adminPdo->exec("DROP DATABASE `$db`");
+                    $message = "Datenbank <strong>$db</strong> wurde gelöscht. Vorheriger Dump: <strong>$dumpFile</strong>.";
                     break;
 
                 case 'copy':
                     if ($newName === '') {
                         throw new Exception('Neuer DB-Name fehlt.');
+                    }
+                    if (!preg_match('/^gamebook_/', $newName)) {
+                        throw new Exception("Neuer DB-Name muss mit 'gamebook_' beginnen.");
                     }
                     // 1) Neue DB anlegen
                     $adminPdo->exec(
@@ -87,6 +169,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 case 'rename':
                     if ($newName === '') {
                         throw new Exception('Neuer DB-Name fehlt.');
+                    }
+                    if (!preg_match('/^gamebook_/', $newName)) {
+                        throw new Exception("Neuer DB-Name muss mit 'gamebook_' beginnen.");
                     }
                     // 1) Neue DB anlegen
                     $adminPdo->exec(
@@ -168,17 +253,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </select>
 
     <label>Aktion:</label>
-    <select name="action">
+    <select name="action" id="actionSelect">
         <option value="dump">Dump</option>
         <option value="copy">Kopieren</option>
         <option value="rename">Umbenennen</option>
+        <option value="delete">Löschen</option>
     </select>
 
     <label>Neuer Name:</label>
-    <input type="text" name="new_db" placeholder="Nur für Kopie/Umbenennung">
+    <input type="text" id="newDbInput" name="new_db" pattern="^gamebook_.*" title="Der Name muss mit 'gamebook_' beginnen" placeholder="Nur für Kopie/Umbenennung">
 
     <button name="db_action">Ausführen</button>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    var form = document.querySelector('form[method="post"]');
+    var actionSelect = document.getElementById('actionSelect');
+    form.addEventListener('submit', function(e){
+        var action = actionSelect.value;
+        if (action === 'delete') {
+            var db = form.querySelector('select[name="db"]').value;
+            if (!confirm('Datenbank "' + db + '" wirklich löschen? Es wird vorher automatisch ein Dump erstellt.')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        // Wenn neue DB gefüllt ist, prüfe clientseitig das Prefix
+        var newDb = document.getElementById('newDbInput').value.trim();
+        if (newDb !== '' && !/^gamebook_/.test(newDb)) {
+            alert("Der neue Datenbankname muss mit 'gamebook_' beginnen.");
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
 
 <?php if ($message): ?>
     <div class="message"><?= $message ?></div>
