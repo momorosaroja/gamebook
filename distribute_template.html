@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{TITLE}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    @page {
+      size: A4;
+      margin: 0.5cm;
+    }
+
+    body {
+      width: 21cm;
+      height: 29.7cm;
+      margin: 0;
+      padding: 2cm;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+      font-size: 10pt;
+      background-color: #f9f9f9;
+    }
+
+    a {
+      color: inherit;         /* übernimmt die Textfarbe des Eltern-Elements */
+      text-decoration: none;  /* entfernt die Unterstreichung */
+      cursor: default;        /* zeigt keinen Link-Cursor (optional) */
+    }
+
+    .page-frame {
+      width: 100%;
+      height: 100%;
+      border: 2px solid #333;
+      border-radius: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2cm;
+      position: relative;
+
+      background-image: url('../places/1.png');
+      background-size: cover;       /* skaliert das Bild, sodass es den ganzen div ausfüllt */
+      background-position: center;  /* zentriert das Bild */
+      background-repeat: no-repeat; /* verhindert Wiederholung */
+      border: 2px solid #333;
+      border-radius: 10px;
+    }
+
+    .overlay {
+      z-index:0; 
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(255, 255, 255, 0.8); /* Weiß mit 60% Transparenz */
+    }
+
+    .content {
+      z-index:1; 
+      width: 100%;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+
+    .page-number {
+      z-index:1; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 3cm;
+      width: 100%;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-frame">
+    <div class="overlay"></div>
+    <div class="content">
+      <h1>{PLACE_NAME}</h1>
+      {PAGE_TEXT}
+    </div>
+    <div class="page-number">{PAGE_NR}</div>
+  </div>
+</body>
+</html>
