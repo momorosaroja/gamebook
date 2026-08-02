@@ -143,15 +143,19 @@ CREATE TABLE `pages` (
 --
 
 CREATE TABLE `places` (
-  `id` int(11) NOT NULL,
-  `name` longtext NOT NULL,
-  `text1` longtext DEFAULT '',
-  `text2` longtext DEFAULT '',
-  `text3` longtext DEFAULT '',
-  `text4` longtext DEFAULT '',
-  `text5` longtext DEFAULT '',
-  `parent_id` int(11) NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id` INT NOT NULL,
+  `name` LONGTEXT NOT NULL,
+  `text1` LONGTEXT DEFAULT '',
+  `text2` LONGTEXT DEFAULT '',
+  `text3` LONGTEXT DEFAULT '',
+  `text4` LONGTEXT DEFAULT '',
+  `text5` LONGTEXT DEFAULT '',
+  `parent_id` INT DEFAULT NULL,
+
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -171,11 +175,23 @@ CREATE TABLE `skills` (
 --
 
 CREATE TABLE `ways` (
-  `id` int(11) NOT NULL,
-  `start` int(11) NOT NULL,
-  `end` int(11) NOT NULL,
-  `bidirectional` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id` INT NOT NULL,
+  `start` INT NOT NULL,
+  `end` INT NOT NULL,
+  `bidirectional` INT NOT NULL,
+
+  PRIMARY KEY (`id`),
+
+  CONSTRAINT `fk_ways_start`
+    FOREIGN KEY (`start`)
+    REFERENCES `places`(`id`),
+
+  CONSTRAINT `fk_ways_end`
+    FOREIGN KEY (`end`)
+    REFERENCES `places`(`id`)
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -208,6 +224,12 @@ ALTER TABLE `characters`
 ALTER TABLE `choice`
   ADD PRIMARY KEY (`id`);
 
+ALTER TABLE `choice`
+  ADD CONSTRAINT `fk_choice_decision`
+    FOREIGN KEY (`decision_id`) REFERENCES `decision` (`id`),
+  ADD CONSTRAINT `fk_choice_place`
+    FOREIGN KEY (`place_id`) REFERENCES `places` (`id`);
+
 --
 -- Indexes for table `decision`
 --
@@ -220,17 +242,35 @@ ALTER TABLE `decision`
 ALTER TABLE `decision_links`
   ADD PRIMARY KEY (`id`);
 
+ALTER TABLE `decision_links`
+  ADD CONSTRAINT `fk_decision_links_decision`
+    FOREIGN KEY (`decision_id`) REFERENCES `decision` (`id`),
+  ADD CONSTRAINT `fk_decision_links_link`
+    FOREIGN KEY (`link_id`) REFERENCES `links` (`id`);
+
 --
 -- Indexes for table `links`
 --
 ALTER TABLE `links`
   ADD PRIMARY KEY (`id`);
 
+ALTER TABLE `links`
+  ADD CONSTRAINT `fk_links_place`
+    FOREIGN KEY (`place_id`) REFERENCES `places` (`id`),
+  ADD CONSTRAINT `fk_links_choice`
+    FOREIGN KEY (`choice_id`) REFERENCES `choice` (`id`),
+  ADD CONSTRAINT `fk_links_page`
+    FOREIGN KEY (`page_id`) REFERENCES `pages` (`id`);
+
 --
 -- Indexes for table `link_objects`
 --
 ALTER TABLE `link_objects`
   ADD PRIMARY KEY (`id`);
+
+ALTER TABLE `link_objects`
+  ADD CONSTRAINT `fk_link_objects_link`
+    FOREIGN KEY (`link_id`) REFERENCES `links` (`id`);
 
 --
 -- Indexes for table `objects`
@@ -250,6 +290,10 @@ ALTER TABLE `pages`
 ALTER TABLE `places`
   ADD PRIMARY KEY (`id`);
 
+ALTER TABLE `places`
+  ADD CONSTRAINT `fk_places_parent`
+    FOREIGN KEY (`parent_id`) REFERENCES `places` (`id`);
+
 --
 -- Indexes for table `skills`
 --
@@ -267,6 +311,10 @@ ALTER TABLE `ways`
 --
 ALTER TABLE `way_objects`
   ADD PRIMARY KEY (`id`);
+
+ALTER TABLE `way_objects`
+  ADD CONSTRAINT `fk_way_objects_way`
+    FOREIGN KEY (`way_id`) REFERENCES `ways` (`id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
