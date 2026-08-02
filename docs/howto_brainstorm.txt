@@ -1,0 +1,41 @@
+versuch, die etwas gewöhnungsbedürftige Datenstruktur zu erforschen:
+
+start mit leerer db,
+
+dann einen abstrakten startplace erzeugen
+
+dann einen link zu diesem startplace erzeugen
+
+ergebnis: eine Page!!
+
+der angelegte place ist das ZIEL des links. unklar ist, von wo dieser link ausgeht
+
+zweiten ort angelegt und beide verbunden - sollte man nach dem generieren dann nicht schon zwischen beiden orten hin und her laufen können?
+
+zweiten link nach ort2 erzeugt, die erste page als page angegeben - wo taucht diese angabe bei den links auf???
+nach dem generieren kann man dann hin und her laufen
+
+ort 3 und ort 4 erzeugt und einen quadratweg gebaut
+
+erkenntnis: man kann nicht zu einem ort gehen, für den keine page existiert!
+
+ok, also: man braucht keinen abstrakten startplace. wenn man sowas haben möchte, muss man von da einen unidirektionalen weg in die realwelt erstellen
+
+AH! wenn ich eine page beim erzeugen eines links angebe, dann wird keinen neue erzeugt!!
+
+--------------------------
+
+offenbar braucht man noch ein bisschen shellwork fürs generieren!
+
+in der shell-history gefunden:
+
+  397  cd ..
+  398  ./htmls2pdfs.sh
+  399  cd ..
+  400  cd htdocs/
+  401  cd pdf
+  402  pdfunite *.pdf output.pdf
+  403  cd ..
+  404  ./htmls2pdfs.sh
+  405  cd pdf
+  406  pdfunite *.pdf output.pdf
