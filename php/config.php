@@ -2,4 +2,4 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'sternenmaennchen');
+define('DB_NAME', 'gamebook_development');
