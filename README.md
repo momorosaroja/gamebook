@@ -11,9 +11,24 @@ Dieses Projekt ist eine kleine Webanwendung zur Verwaltung von Spiel- und Entsch
 
 ## Voraussetzungen
 
-- Apache / XAMPP bzw. ein PHP-fähiger Webserver
-- PHP 8+
+- Apache 
+
+sudo apt update
+sudo apt install apache2
+systemctl status apache2
+http://localhost
+
 - MariaDB/MySQL
+
+sudo apt install mariadb-server
+sudo mariadb
+
+- PHP 8+
+
+sudo apt install php libapache2-mod-php php-mysql
+sudo apt install php-cli php-curl php-gd php-mbstring php-xml php-zip
+php .v
+
 
 - Todo für die Generierung (was zum PDF-Merge und chromium oder so zur pdf-Erstellung anhand der HTML-Seiten)
 
