@@ -27,7 +27,13 @@ sudo mariadb
 
 sudo apt install php libapache2-mod-php php-mysql
 sudo apt install php-cli php-curl php-gd php-mbstring php-xml php-zip
-php .v
+php -v
+
+- phpmyadmin
+
+sudo apt update
+sudo apt install phpmyadmin
+sudo systemctl reload apache2
 
 
 - Todo für die Generierung (was zum PDF-Merge und chromium oder so zur pdf-Erstellung anhand der HTML-Seiten)
