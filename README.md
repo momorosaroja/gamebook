@@ -17,6 +17,11 @@ Dieses Projekt ist eine kleine Webanwendung zur Verwaltung von Spiel- und Entsch
 
 - Todo für die Generierung (was zum PDF-Merge und chromium oder so zur pdf-Erstellung anhand der HTML-Seiten)
 
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install ./google-chrome-stable_current_amd64.deb
+google-chrome --version
+
+
 ## Einrichtung
 
 1. Die Projektdateien in das Webroot des Servers kopieren oder dort ausführen.
